@@ -1,0 +1,51 @@
+version: '3.7'
+services:
+  db:
+    build: 
+      context: ./MySQL
+      dockerfile: Dockerfile
+    container_name: mysql_db_course
+    restart: always
+    ports:
+      - 4700:3306
+    volumes:
+      - ./Config/mysql:/var/lib/mysql
+    hostname: apps_database
+    networks:
+      - course_network
+    healthcheck:
+        test: ["CMD","mysql", "-u", "root", "-proot123*"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+# --------------------------------------------------------------------
+  # - The adminer is a tool for managing content in databases.
+  adminer:
+    image: adminer
+    container_name: adminer_course
+    restart: always
+    ports:
+      - 8005:8080
+    networks:
+      - course_network
+# --------------------------------------------------------------------
+
+  backend:
+    build: 
+      context: ./backend_course
+      dockerfile: Dockerfile
+    container_name: backend_course
+    restart: always
+    ports:
+      - 8010:80
+    depends_on:
+       db: 
+         condition: service_healthy
+    networks:
+      - course_network
+
+
+networks:
+  course_network:
+      driver: bridge
+      name: course_network
